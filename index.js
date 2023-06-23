@@ -326,9 +326,52 @@ const commands = {
      * @param {number} commandIndex
      */
     W(processor, commands, commandIndex){
-        const [value, address] = processor._fetchTwoArgs();
+        const [address, value] = processor._fetchTwoArgs();
         if(address < 0 || address > MAX_MEMORY_ADDRESS) throw new RangeError("INVALID ADDRESS");
         processor.memory[address] = value;
+    },
+    /**
+     * @param {Processor} processor
+     * @param {string[]} commands
+     * @param {number} commandIndex
+     */
+    SIZE(processor, commands, commandIndex){
+        processor.stack.push(processor.memory.length);
+    },
+    /**
+     * @param {Processor} processor
+     * @param {string[]} commands
+     * @param {number} commandIndex
+     */
+    EXTS(processor, commands, commandIndex){
+        processor.stack.push(0);
+    },
+    /**
+     * @param {Processor} processor
+     * @param {string[]} commands
+     * @param {number} commandIndex
+     */
+    P3(processor, commands, commandIndex){
+        const value = processor._fetchOneArg();
+        processor.stack.push(value, value);
+    },
+    /**
+     * @param {Processor} processor
+     * @param {string[]} commands
+     * @param {number} commandIndex
+     */
+    CEXTS(processor, commands, commandIndex){
+        const value = processor._fetchOneArg();
+        processor.stack.push(value, value);
+    },
+    /**
+     * @param {Processor} processor
+     * @param {string[]} commands
+     * @param {number} commandIndex
+     */
+    USEXTS(processor, commands, commandIndex){
+        const extensionBitfield = processor._fetchOneArg();
+        if(extensionBitfield !== 0) throw new Error("INCOMPATIBLE EXTENSION");
     }
 };
 class FunctionTrace{
@@ -352,12 +395,6 @@ class FunctionTrace{
      * @type {number}
      */
     index
-}
-class CommandNotFoundError extends Error{
-    constructor(message, commandName){
-        super(message);
-        this.commandName = commandName;
-    }
 }
 const _nextTick = () => new Promise(r => process.nextTick(r));
 class Processor extends EventEmitter{
@@ -436,7 +473,7 @@ class Processor extends EventEmitter{
         if(command === "DF"){
             this.functions[this.currentFunctionName] = undefined;
             this.currentFunctionName = undefined;
-            throw new SyntaxError("DF CANNOT BE USED INSIDE A DF. CANCELED");
+            throw new SyntaxError("DF CANNOT BE USED INSIDE A FUNCTION. CANCELED");
         }
         if(command === "EF"){
             this.currentFunctionName = undefined;
@@ -490,11 +527,8 @@ class Processor extends EventEmitter{
             return;
         }
         const commandFunction = commands[command];
-        if(command !== ""){
-            if(!commandFunction){
-                this.emit("error",new CommandNotFoundError(`Command ${command} not found`, command));
-                return;
-            }
+        if(command !== ""){ // if command === "", skip it
+            if(!commandFunction) throw new Error("NO COMMAND");
             commandFunction(this, currentStacktrace.splittedCode, currentStacktrace.index);
         }
         currentStacktrace.index++;
