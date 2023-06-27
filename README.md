@@ -5,7 +5,7 @@
 The origin of the Brute Stack Code was because of the Red Power's minecraft mod computer which implemented the FORTH language. This means Brute Stack Code is inspirated from FORTH language
 
 ## How it works:
-Brute Stack Code uses a stack (FIFO envorinment) to manipulate data and a RAM-like to store temporary data for later use.
+Brute Stack Code uses a stack ([LIFO](https://en.wikipedia.org/wiki/LIFO_(computing)) envorinment) to manipulate data and a RAM-like to store temporary data for later use.
 
 
 Programs can only has a stacktrace (function tracing stack) of size 50 elements.
